@@ -16,11 +16,20 @@
                 // todo: UMV: log to logs textarea
         logWsEvent("Websocket connection opened", null);
         socket.onmessage = function (event) {
-            console.log("Got message from server");
+            console.log("Got message from server: ", event.data);
             if (event.data != null) {
                 logWsEvent("Received data from websocket server", event.data);
             }
          }
+        socket.onerror = function (event) {
+            logWsEvent("Websocket connection failed", event)
+        }
+        socket.onopen = function() {
+            logWsEvent("Websocket connection opened", null);
+        }
+        socket.onclose = function() {
+            logWsEvent("Websocket connection closed", null)
+        }
     }
 
     function closeWsServer() {
@@ -33,15 +42,22 @@
     }
 
     function sendDataToWsServer() {
-        if (socket != null) {
-            console.log("Websocket send data");
-            var message = $("#ws_payload").val();
-            if (message.startsWith("{")) {
-                message = JSON.stringify(message);
-            }
-            socket.send(message);
-            logWsEvent("Data was send", message);
+        if (socket == null) {
+            console.log(socketAddress + " not opened");
+            logWsEvent("Websocket not opened or closed", null);
+            return;
         }
+
+        console.log("Websocket send data");
+        var message = $("#ws_payload").val();
+        try {
+            socket.send(message);
+        } catch(error) {
+            console.log("Websocket send error", error);
+            logWsEvent("Websocket send error", error);
+            return;
+        }
+        logWsEvent("Data was send", message);
     }
 
     function buildServerAddress(address, secure) {
